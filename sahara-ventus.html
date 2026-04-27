@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sahara Ventus — Team 10123</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #1133bb;
+    --dark-blue: #0a1a6e;
+    --deep: #060d3a;
+    --white: #ffffff;
+    --grid-line: rgba(255,255,255,0.08);
+    --accent: #4af0ff;
+    --accent2: #ffe94a;
+    --text-dim: rgba(255,255,255,0.6);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--deep);
+    color: var(--white);
+    font-family: 'Rajdhani', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Blueprint grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 48px;
+    background: rgba(6,13,58,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(74,240,255,0.2);
+  }
+
+  .nav-logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 1.2rem;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+
+  .nav-logo span { color: var(--white); }
+
+  nav ul {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  nav ul a {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  nav ul a:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 24px 80px;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .hero-turbine {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    opacity: 0.06;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: slowspin 40s linear infinite;
+  }
+
+  @keyframes slowspin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+  .hero-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 6px 18px;
+    margin-bottom: 32px;
+    text-transform: uppercase;
+    animation: fadein 1s ease both;
+  }
+
+  .hero h1 {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: clamp(3.5rem, 10vw, 8rem);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    animation: fadein 1s 0.2s ease both;
+  }
+
+  .hero h1 em {
+    display: block;
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero-sub {
+    margin-top: 28px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    max-width: 600px;
+    line-height: 1.7;
+    animation: fadein 1s 0.4s ease both;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 48px;
+    margin-top: 56px;
+    animation: fadein 1s 0.6s ease both;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent2);
+    display: block;
+  }
+
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .scroll-indicator {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    animation: bounce 2s ease infinite;
+  }
+
+  .scroll-indicator::after {
+    content: '';
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(var(--accent), transparent);
+  }
+
+  @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-8px)} }
+  @keyframes fadein { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── SECTION WRAPPER ── */
+  section { position: relative; z-index: 1; padding: 100px 48px; max-width: 1400px; margin: 0 auto; }
+
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 48px;
+  }
+
+  /* ── TEAM ── */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
+  }
+
+  .member-card {
+    background: rgba(17, 51, 187, 0.15);
+    border: 1px solid rgba(74,240,255,0.15);
+    padding: 0;
+    overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    cursor: default;
+  }
+
+  .member-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--accent);
+    box-shadow: 0 20px 60px rgba(74,240,255,0.1);
+  }
+
+  .member-avatar {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    background: linear-gradient(135deg, rgba(17,51,187,0.4), rgba(6,13,58,0.8));
+    position: relative;
+    overflow: hidden;
+  }
+
+  .member-avatar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(transparent 60%, rgba(6,13,58,0.9));
+  }
+
+  .member-avatar .initials {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 3rem;
+    color: rgba(74,240,255,0.3);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Blueprint circle decoration */
+  .member-avatar::before {
+    content: '';
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    border: 1px solid rgba(74,240,255,0.15);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+  }
+
+  .member-body {
+    padding: 20px 24px 24px;
+  }
+
+  .member-role {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .member-name {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
+  .member-nickname {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent2);
+    margin-bottom: 16px;
+  }
+
+  .member-divider {
+    height: 1px;
+    background: rgba(74,240,255,0.1);
+    margin: 14px 0;
+  }
+
+  .member-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+    word-break: break-all;
+  }
+
+  .contact-item:hover { color: var(--accent); }
+
+  .contact-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    background: rgba(74,240,255,0.1);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    margin-top: 1px;
+  }
+
+  /* ── PROJECT SECTIONS ── */
+  .content-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 40px;
+    border-bottom: 1px solid rgba(74,240,255,0.15);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 12px 24px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    cursor: pointer;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s;
+    margin-bottom: -1px;
+  }
+
+  .tab-btn:hover { color: var(--white); }
+  .tab-btn.active { color: var(--accent); border-color: var(--accent); }
+
+  .tab-content { display: none; animation: fadein 0.4s ease both; }
+  .tab-content.active { display: block; }
+
+  .prose {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.82);
+    max-width: 900px;
+  }
+
+  .prose p { margin-bottom: 1.2em; }
+
+  .prose strong { color: var(--accent2); }
+
+  /* Key results */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 40px;
+  }
+
+  .result-card {
+    background: rgba(17,51,187,0.15);
+    border: 1px solid rgba(74,240,255,0.12);
+    padding: 24px;
+    text-align: center;
+  }
+
+  .result-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent2);
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .result-desc {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    line-height: 1.5;
+  }
+
+  /* Materials table */
+  .materials-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.82rem;
+    margin-top: 12px;
+  }
+
+  .materials-table th {
+    text-align: left;
+    padding: 12px 16px;
+    background: rgba(74,240,255,0.08);
+    color: var(--accent);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(74,240,255,0.2);
+  }
+
+  .materials-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.75);
+    vertical-align: top;
+  }
+
+  .materials-table tr:hover td { background: rgba(17,51,187,0.15); }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid rgba(74,240,255,0.1);
+    padding: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .footer-logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 1.4rem;
+    color: var(--accent);
+  }
+
+  .footer-info {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    line-height: 1.8;
+    text-align: right;
+  }
+
+  /* STEM logos area */
+  .stem-badges {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 60px;
+    padding: 0 0 0 0;
+  }
+
+  .stem-badge {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 8px 16px;
+    text-transform: uppercase;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    nav { padding: 14px 20px; }
+    nav ul { gap: 16px; }
+    section { padding: 80px 20px; }
+    .hero-stats { gap: 24px; flex-wrap: wrap; justify-content: center; }
+    footer { padding: 32px 20px; flex-direction: column; align-items: flex-start; }
+    .footer-info { text-align: left; }
+  }
+
+  /* Decorative corners */
+  .corner-box {
+    position: relative;
+  }
+  .corner-box::before, .corner-box::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: var(--accent);
+    border-style: solid;
+    opacity: 0.5;
+  }
+  .corner-box::before { top: -8px; left: -8px; border-width: 2px 0 0 2px; }
+  .corner-box::after  { top: -8px; right: -8px; border-width: 2px 2px 0 0; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">SAHARA<span> VENTUS</span></div>
+  <ul>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#project">Project</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <!-- Decorative spinning circle (turbine feel) -->
+  <svg class="hero-turbine" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="200" cy="200" r="190" stroke="white" stroke-width="1"/>
+    <circle cx="200" cy="200" r="150" stroke="white" stroke-width="0.5" stroke-dasharray="8 4"/>
+    <circle cx="200" cy="200" r="90" stroke="white" stroke-width="1"/>
+    <circle cx="200" cy="200" r="30" stroke="white" stroke-width="1"/>
+    <line x1="200" y1="10" x2="200" y2="390" stroke="white" stroke-width="0.5"/>
+    <line x1="10" y1="200" x2="390" y2="200" stroke="white" stroke-width="0.5"/>
+    <line x1="55" y1="55" x2="345" y2="345" stroke="white" stroke-width="0.5"/>
+    <line x1="345" y1="55" x2="55" y2="345" stroke="white" stroke-width="0.5"/>
+    <path d="M200 200 Q240 100 200 50" stroke="white" stroke-width="2"/>
+    <path d="M200 200 Q300 240 350 200" stroke="white" stroke-width="2"/>
+    <path d="M200 200 Q160 300 200 350" stroke="white" stroke-width="2"/>
+    <path d="M200 200 Q100 160 50 200" stroke="white" stroke-width="2"/>
+  </svg>
+
+  <div class="hero-badge">Team 10123 · STEM October · 2025–2026</div>
+  <h1>SAHARA<em>VENTUS</em></h1>
+  <p class="hero-sub">
+    A Savonius Vertical-Axis Wind Turbine designed to replace diesel generators in El Kharga Oasis, New Valley — harnessing the desert wind to power a cleaner future.
+  </p>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-num">679 J</span>
+      <span class="stat-label">Peak Output</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">+101%</span>
+      <span class="stat-label">Performance Gain</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">2 m/s</span>
+      <span class="stat-label">Self-Start Speed</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">80 °C</span>
+      <span class="stat-label">Heat Resistance</span>
+    </div>
+  </div>
+
+  <div class="scroll-indicator">SCROLL</div>
+</div>
+
+<!-- TEAM -->
+<section id="team">
+  <div class="section-label">// 01 — The Team</div>
+  <h2 class="section-title">Meet the Builders</h2>
+
+  <div class="stem-badges">
+    <span class="stem-badge">STEM Egypt</span>
+    <span class="stem-badge">Grade 10</span>
+    <span class="stem-badge">Capstone Project</span>
+    <span class="stem-badge">Semester 2 · 2025-2026</span>
+  </div>
+
+  <div class="team-grid">
+
+    <!-- Omar -->
+    <div class="member-card">
+      <div class="member-avatar">
+        <span class="initials">OH</span>
+      </div>
+      <div class="member-body">
+        <div class="member-role">The Joker</div>
+        <div class="member-name">Omar Hany</div>
+        <div class="member-nickname">// Chaos & Creativity</div>
+        <div class="member-divider"></div>
+        <div class="member-contact">
+          <a class="contact-item" href="tel:01022611467">
+            <span class="contact-icon">📞</span>01022611467
+          </a>
+          <a class="contact-item" href="mailto:Omar.1025101@stemoctober.moe.edu.eg">
+            <span class="contact-icon">✉</span>Omar.1025101@stemoctober.moe.edu.eg
+          </a>
+          <a class="contact-item" href="mailto:omarhany0510@gmail.com">
+            <span class="contact-icon">✉</span>omarhany0510@gmail.com
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mostafa -->
+    <div class="member-card">
+      <div class="member-avatar">
+        <span class="initials">MM</span>
+      </div>
+      <div class="member-body">
+        <div class="member-role">The Designer</div>
+        <div class="member-name">Mostafa Mohamed</div>
+        <div class="member-nickname">// Form & Function</div>
+        <div class="member-divider"></div>
+        <div class="member-contact">
+          <a class="contact-item" href="tel:01006196523">
+            <span class="contact-icon">📞</span>01006196523
+          </a>
+          <a class="contact-item" href="mailto:mostafa.1025120@stemoctober.moe.edu.eg">
+            <span class="contact-icon">✉</span>mostafa.1025120@stemoctober.moe.edu.eg
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Yassen -->
+    <div class="member-card">
+      <div class="member-avatar">
+        <span class="initials">YH</span>
+      </div>
+      <div class="member-body">
+        <div class="member-role">The Writer</div>
+        <div class="member-name">Yassen Hamza</div>
+        <div class="member-nickname">// Words & Clarity</div>
+        <div class="member-divider"></div>
+        <div class="member-contact">
+          <a class="contact-item" href="tel:01044367288">
+            <span class="contact-icon">📞</span>01044367288
+          </a>
+          <a class="contact-item" href="mailto:yassen.1025125@stemoctober.moe.edu.eg">
+            <span class="contact-icon">✉</span>yassen.1025125@stemoctober.moe.edu.eg
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Khairy -->
+    <div class="member-card">
+      <div class="member-avatar">
+        <span class="initials">KM</span>
+      </div>
+      <div class="member-body">
+        <div class="member-role">The Researcher</div>
+        <div class="member-name">Khairy Mahmoud</div>
+        <div class="member-nickname">// Data & Discovery</div>
+        <div class="member-divider"></div>
+        <div class="member-contact">
+          <a class="contact-item" href="tel:01063205257">
+            <span class="contact-icon">📞</span>01063205257
+          </a>
+          <a class="contact-item" href="mailto:khairy.1025077@stemoctober.moe.edu.eg">
+            <span class="contact-icon">✉</span>khairy.1025077@stemoctober.moe.edu.eg
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Abdelrahman -->
+    <div class="member-card">
+      <div class="member-avatar">
+        <span class="initials">AM</span>
+      </div>
+      <div class="member-body">
+        <div class="member-role">The Prototyper</div>
+        <div class="member-name">Abdelrahman Mohamed</div>
+        <div class="member-nickname">// Build & Test</div>
+        <div class="member-divider"></div>
+        <div class="member-contact">
+          <a class="contact-item" href="tel:01090273797">
+            <span class="contact-icon">📞</span>01090273797
+          </a>
+          <a class="contact-item" href="mailto:abdelrahman.1025089@stemoctober.moe.edu.eg">
+            <span class="contact-icon">✉</span>abdelrahman.1025089@stemoctober.moe.edu.eg
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PROJECT -->
+<section id="project" style="border-top: 1px solid rgba(74,240,255,0.08);">
+  <div class="section-label">// 02 — The Project</div>
+  <h2 class="section-title">Sahara Ventus</h2>
+
+  <div class="content-tabs">
+    <button class="tab-btn active" onclick="showTab('abstract')">Abstract</button>
+    <button class="tab-btn" onclick="showTab('intro')">Introduction</button>
+    <button class="tab-btn" onclick="showTab('materials')">Materials</button>
+    <button class="tab-btn" onclick="showTab('conclusions')">Conclusions</button>
+    <button class="tab-btn" onclick="showTab('recommendation')">Recommendation</button>
+  </div>
+
+  <!-- ABSTRACT -->
+  <div id="tab-abstract" class="tab-content active">
+    <div class="prose">
+      <p>Egypt's progress is impeded by several grand challenges. This project addresses <strong>pollution</strong> and improving the use of <strong>alternative energies</strong>. The problem to be solved is reducing pollution by using alternative energies in Kharga Oasis, New Valley, where the local population depends entirely on diesel generators for electricity, which emit carbon dioxide, nitrogen oxides, sulfur oxides, and particulate matter.</p>
+      <p>Nitrogen oxides contribute to smog formation and respiratory disease; sulfur oxides produce acid rain that degrades soil and biodiversity; particulate matter penetrates lung tissue, causing cardiovascular illness. Therefore, the purpose of the study is to design a renewable energy system to replace diesel generation as the community's primary power source.</p>
+      <p>A <strong>Savonius VAWT wind turbine</strong> was designed using locally available resources — aluminum and MDF wood — targeting a power output sufficient to exceed baseline energy demands. The prototype must generate a minimum of 150 Joules under average local wind conditions, initiate movement at 4 m/s, withstand 60 °C without deformation, while not exceeding 0.25 m³ in volume.</p>
+      <p>The prototype underwent performance testing, and results demonstrated that the system <strong>successfully exceeds the required power output</strong> and operated reliably, offering a viable, clean alternative that directly reduces pollution and improves community health outcomes in El Kharga Oasis.</p>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <div id="tab-intro" class="tab-content">
+    <div class="prose">
+      <p>Egypt's recent evolution and development has many goals, two of which are to improve the use of alternative energies and address and reduce pollution fouling our air, water, and soil. The lack of use of alternative energies is mainly tied to the dependency on fossil fuels, as <strong>Egypt uses fossil fuels to generate over 94% of its energy</strong>. The heavy reliance on fossil fuels directly arises severe pollution due to the emissions it produces during combustion. Fossil fuel consumption produces many pollutants, such as carbon dioxide, which is emitted in large amounts annually, roughly reaching <strong>242 Megatonnes in 2023</strong>.</p>
+      <p>The problem to be solved is the heavy reliance on diesel generators to generate electricity in El Kharga oasis. In El Kharga oasis, the only energy source is diesel generators, which are used to produce 100% of the energy there. El Kharga oasis depends on diesel generators to achieve its energy demands, which are estimated to be <strong>200 kWh/day</strong>. Diesel generators are the main reason for the elevation of PAH concentrations in El Kharga's sediments, reaching up to 790.14 ng/g of dry weight — considered harmful to the environment and a significant health risk.</p>
+      <p>Two prior solutions were considered. The first is the <strong>Zafarana wind farm</strong>, which is reliable but significantly expensive — each HAWT unit costs 20 million dollars to manufacture and install. The second is small-scale vertical-axis wind turbines in Mang, Pakistan, which achieve environmental sustainability through wind energy but suffer from reduced efficiency.</p>
+      <p>The chosen solution is a <strong>Savonius vertical-axis wind turbine</strong> — a drag-based wind turbine consisting of two curved blades with an overlap of 5% for increased pressure difference and higher efficiency. Guide vanes were added to accelerate and redirect wind toward the blades, boosting performance significantly.</p>
+    </div>
+  </div>
+
+  <!-- MATERIALS -->
+  <div id="tab-materials" class="tab-content">
+    <div class="prose" style="margin-bottom:28px;">
+      <p>All components were selected for local availability and structural performance requirements. The prototype was built using the following materials:</p>
+    </div>
+    <table class="materials-table">
+      <thead>
+        <tr>
+          <th>Material</th>
+          <th>Quantity</th>
+          <th>Usage</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Aluminium Sheet</td>
+          <td>1 sheet (1×1 m, 0.5 mm thick)</td>
+          <td>Turbine blades</td>
+        </tr>
+        <tr>
+          <td>Steel Pipe</td>
+          <td>1 m, 25 mm diameter</td>
+          <td>Center shaft of prototype</td>
+        </tr>
+        <tr>
+          <td>Stud Rod</td>
+          <td>4 rods × 0.08 m each</td>
+          <td>Attach blades to center shaft</td>
+        </tr>
+        <tr>
+          <td>Hex Nuts & Flat Washers</td>
+          <td>24 hex nuts, 16 washers</td>
+          <td>Fix stud rods to blades and shaft</td>
+        </tr>
+        <tr>
+          <td>MDF Wood</td>
+          <td>3 sheets (1.22×1.22 m)</td>
+          <td>Guide vanes construction</td>
+        </tr>
+        <tr>
+          <td>MDF Glue</td>
+          <td>2 packets</td>
+          <td>Fix blades to tori and bearings</td>
+        </tr>
+        <tr>
+          <td>Ball Bearing</td>
+          <td>2 items</td>
+          <td>Enable rotation, reduce friction</td>
+        </tr>
+        <tr>
+          <td>DC Generator</td>
+          <td>1 unit</td>
+          <td>Convert mechanical to electrical energy</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CONCLUSIONS -->
+  <div id="tab-conclusions" class="tab-content">
+    <div class="prose">
+      <p>The prototype was found to be a <strong>huge success</strong> — able to generate more than 600 joules and 2 watts, exceeding the design requirements and resolving the problem using a Savonius wind turbine that mainly utilizes drag force. It demonstrates its capability of solving significant problems such as pollution and fostering the use of alternative energies.</p>
+      <p>Negative results were found and overcome. The project met the solution requirements of generating renewable, carbon-free electricity. The project had positive results, exceeding specified design requirements by generating <strong>more than 2 watts in 5 minutes in low-wind speeds</strong> with high efficiency, benefiting from prior solutions while avoiding their weaknesses and enhancing their positives.</p>
+    </div>
+    <div class="results-grid">
+      <div class="result-card">
+        <span class="result-val">338 J</span>
+        <span class="result-desc">Base design output (5 min)</span>
+      </div>
+      <div class="result-card">
+        <span class="result-val">582 J</span>
+        <span class="result-desc">With guide vanes (+72%)</span>
+      </div>
+      <div class="result-card">
+        <span class="result-val">591.9 J</span>
+        <span class="result-desc">With end plates (+74.9%)</span>
+      </div>
+      <div class="result-card">
+        <span class="result-val">679 J</span>
+        <span class="result-desc">All enhancements (+100.8%)</span>
+      </div>
+      <div class="result-card">
+        <span class="result-val">2 m/s</span>
+        <span class="result-desc">Self-starting wind speed</span>
+      </div>
+      <div class="result-card">
+        <span class="result-val">80 °C</span>
+        <span class="result-desc">Heat withstand (req: 60°C)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECOMMENDATION -->
+  <div id="tab-recommendation" class="tab-content">
+    <div class="prose">
+      <p>The project is determined to be implemented in <strong>El Kharga Oasis</strong>, which has an electricity demand of 200 kWh/day — all currently produced by diesel generators. El Kharga Oasis has great potential for generating electricity from wind, with wind speeds ranging between <strong>6.8 m/s and 7.9 m/s</strong>. Installing Savonius vertical-axis wind turbines will utilize this wind energy, reducing fossil fuel dependency, CO₂ emissions, and bringing economic growth to the region.</p>
+      <p>For the real-life application, two enhancements are recommended. First, a <strong>Maglev Dynamo</strong> — replacing the mechanical bearing with a magnetic bearing — reduces vibration by 30%, reduces friction to near zero, and achieves efficiency of approximately 96%. Second, replacing aluminum blades with <strong>glass fiber (GFRP)</strong> would reduce blade weight, lower rotational inertia, allow self-starting at lower wind speeds, and produce smoother aerodynamic profiles through complex 3D molding without joints or welds.</p>
+      <p>Leaving the problem unsolved will continue to affect human health, increase environmental damage, and cause economic instability in the region.</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- FOOTER -->
+<footer id="contact">
+  <div>
+    <div class="footer-logo">SAHARA VENTUS</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--text-dim);margin-top:8px;letter-spacing:0.1em;">
+      STEM High School for Boys — 6th of October<br>
+      Grade 10 · Team 10123 · 2025–2026
+    </div>
+  </div>
+  <div class="footer-info">
+    Keywords: Renewable Energy · Wind Power · BluePrint<br>
+    Supervised by Mr. Samir Ashour · Capstone Teacher<br>
+    © 2026 Team 10123 — All rights reserved
+  </div>
+</footer>
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
