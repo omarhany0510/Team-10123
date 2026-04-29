@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Savonius VAWT — 3D Precision Simulator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@300;400;700&display=swap');
+
+:root {
+  --bg:       #08090d;
+  --surface:  #0e1118;
+  --panel:    #111620;
+  --border:   rgba(160,200,255,0.12);
+  --accent:   #4fc3f7;
+  --green:    #69f0ae;
+  --amber:    #ffca28;
+  --red:      #ff7043;
+  --purple:   #ce93d8;
+  --text:     #cdd9e8;
+  --dim:      #4a5a72;
+  --blade-a:  rgba(100,170,220,0.82);
+  --blade-b:  rgba(80,140,190,0.75);
+  --plate:    rgba(140,180,210,0.55);
+  --vane-c:   rgba(130,160,200,0.50);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 290px 1fr 270px;
+  grid-template-rows: 52px 1fr;
+  overflow: hidden;
+}
+
+/* HEADER */
+header {
+  grid-column: 1/-1;
+  background: linear-gradient(90deg, #0c1220, #111825, #0c1220);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+}
+header h1 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+header .pill {
+  font-size: 0.58rem;
+  background: rgba(79,195,247,0.1);
+  border: 1px solid rgba(79,195,247,0.25);
+  color: var(--accent);
+  padding: 3px 10px;
+  letter-spacing: 1.5px;
+}
+.ml { margin-left:auto; }
+
+/* PANELS */
+.left, .right {
+  background: var(--panel);
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.left { border-right: 1px solid var(--border); }
+.right { border-left: 1px solid var(--border); }
+
+.sec {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.62rem;
+  color: var(--accent);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 5px;
+  margin-bottom: 4px;
+}
+
+.ctrl { display:flex; flex-direction:column; gap:8px; }
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.63rem;
+  color: var(--dim);
+  letter-spacing: 0.5px;
+}
+.row .val { color: var(--green); font-weight: 700; }
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 2px;
+  background: rgba(79,195,247,0.15);
+  outline: none;
+  margin: 3px 0;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(79,195,247,0.9);
+}
+
+/* Toggle */
+.tog-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.tog-label { font-size: 0.63rem; color: var(--text); }
+.tog { position:relative; width:40px; height:20px; cursor:pointer; }
+.tog input { display:none; }
+.tk {
+  position:absolute; inset:0;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--dim);
+  border-radius: 10px;
+  transition: all 0.3s;
+}
+.tk::before {
+  content:'';
+  position:absolute;
+  width:14px; height:14px;
+  top:2px; left:2px;
+  border-radius:50%;
+  background: var(--dim);
+  transition: all 0.3s;
+}
+.tog input:checked + .tk {
+  background: rgba(105,240,174,0.12);
+  border-color: var(--green);
+  box-shadow: 0 0 6px rgba(105,240,174,0.35);
+}
+.tog input:checked + .tk::before {
+  transform: translateX(20px);
+  background: var(--green);
+  box-shadow: 0 0 5px rgba(105,240,174,0.8);
+}
+
+/* View buttons */
+.vbtns { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.vbtn {
+  background: rgba(79,195,247,0.04);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 1px;
+  padding: 6px 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+.vbtn:hover, .vbtn.active {
+  background: rgba(79,195,247,0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Canvas area */
+.cvs-area {
+  position: relative;
+  background: radial-gradient(ellipse 70% 70% at 50% 45%, #101828, #08090d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+canvas { display:block; cursor:grab; }
+canvas:active { cursor:grabbing; }
+
+.hud {
+  position: absolute;
+  font-size: 0.55rem;
+  color: rgba(79,195,247,0.35);
+  letter-spacing: 1.5px;
+  pointer-events: none;
+}
+.hud.tl { top:12px; left:14px; }
+.hud.tr { top:12px; right:14px; }
+.hud.bl { bottom:12px; left:14px; }
+
+/* Wind indicator */
+.wind-bar {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(8,9,13,0.85);
+  border: 1px solid var(--border);
+  padding: 5px 14px;
+  font-size: 0.6rem;
+  color: var(--accent);
+  letter-spacing: 2px;
+}
+.arrows { display:flex; gap:3px; }
+.arr {
+  width:0; height:0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 7px solid var(--accent);
+  animation: wp 1.2s ease-in-out infinite;
+}
+.arr:nth-child(2) { animation-delay:.2s; }
+.arr:nth-child(3) { animation-delay:.4s; }
+@keyframes wp { 0%,100%{opacity:0.15} 50%{opacity:1} }
+
+/* Metrics */
+.metric {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  position: relative;
+  overflow: hidden;
+}
+.metric::before {
+  content:''; position:absolute;
+  top:0; left:0; width:3px; height:100%;
+}
+.metric.rpm::before  { background: var(--accent); }
+.metric.torq::before { background: var(--green); }
+.metric.pow::before  { background: var(--amber); }
+.metric.enrg::before { background: var(--purple); }
+
+.mname { font-size:0.55rem; color:var(--dim); letter-spacing:2px; text-transform:uppercase; margin-bottom:5px; }
+.mval  {
+  font-family:'Rajdhani',sans-serif;
+  font-size:1.5rem; font-weight:700; line-height:1;
+}
+.metric.rpm  .mval { color:var(--accent); }
+.metric.torq .mval { color:var(--green);  }
+.metric.pow  .mval { color:var(--amber);  }
+.metric.enrg .mval { color:var(--purple); }
+.munit { font-size:0.6rem; color:var(--dim); margin-left:3px; }
+.mbar-bg { margin-top:7px; height:2px; background:rgba(255,255,255,0.05); border-radius:1px; overflow:hidden; }
+.mbar { height:100%; border-radius:1px; transition:width .5s ease; }
+.metric.rpm  .mbar { background:var(--accent); }
+.metric.torq .mbar { background:var(--green);  }
+.metric.pow  .mbar { background:var(--amber);  }
+.metric.enrg .mbar { background:var(--purple); }
+
+.specs { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.sp {
+  background: rgba(79,195,247,0.03);
+  border: 1px solid var(--border);
+  padding: 7px;
+  text-align: center;
+}
+.spv { font-family:'Rajdhani',sans-serif; font-size:0.85rem; color:var(--accent); }
+.spk { font-size:0.5rem; color:var(--dim); letter-spacing:1px; margin-top:1px; }
+
+.fml {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  padding: 9px 11px;
+  font-size: 0.57rem;
+  color: var(--dim);
+  line-height: 1.9;
+}
+.fml .f { color:var(--green); }
+
+.rst-btn {
+  background: rgba(255,112,67,0.06);
+  border: 1px solid rgba(255,112,67,0.25);
+  color: var(--red);
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.6rem; letter-spacing:2px;
+  padding:9px; cursor:pointer; width:100%;
+  text-transform:uppercase; transition:all .2s;
+}
+.rst-btn:hover { background:rgba(255,112,67,0.14); }
+
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⟳ Savonius VAWT · Precision 3D</h1>
+  <span class="pill">H=0.8m · D_rotor=0.4m · Overlap=0.10D</span>
+  <span class="pill ml">Guide Vanes: 12 · 60°</span>
+</header>
+
+<!-- LEFT -->
+<div class="left">
+
+  <div>
+    <div class="sec">Wind Speed</div>
+    <div class="ctrl">
+      <div class="row">Wind Speed <span class="val" id="wsv">6.0 m/s</span></div>
+      <input type="range" id="ws" min="0" max="20" step="0.1" value="6">
+    </div>
+  </div>
+
+  <div>
+    <div class="sec">View Preset</div>
+    <div class="vbtns">
+      <button class="vbtn active" onclick="setView('iso',event)">Isometric</button>
+      <button class="vbtn" onclick="setView('top',event)">Top</button>
+      <button class="vbtn" onclick="setView('front',event)">Front</button>
+      <button class="vbtn" onclick="setView('side',event)">Side</button>
+    </div>
+    <div style="margin-top:8px;font-size:0.58rem;color:var(--dim)">Drag to orbit · Scroll to zoom</div>
+  </div>
+
+  <div>
+    <div class="sec">Components</div>
+    <div class="tog-row">
+      <span class="tog-label">End Plates (rotor)</span>
+      <label class="tog"><input type="checkbox" id="ep" checked><div class="tk"></div></label>
+    </div>
+    <div class="tog-row">
+      <span class="tog-label">Guide Vane Stator</span>
+      <label class="tog"><input type="checkbox" id="gv"><div class="tk"></div></label>
+    </div>
+    <div class="tog-row">
+      <span class="tog-label">Rotation Axis</span>
+      <label class="tog"><input type="checkbox" id="ax" checked><div class="tk"></div></label>
+    </div>
+    <div class="tog-row">
+      <span class="tog-label">Wind Particles</span>
+      <label class="tog"><input type="checkbox" id="wp" checked><div class="tk"></div></label>
+    </div>
+    <div class="tog-row">
+      <span class="tog-label">Wireframe Mode</span>
+      <label class="tog"><input type="checkbox" id="wf"><div class="tk"></div></label>
+    </div>
+  </div>
+
+  <div>
+    <div class="sec">End Plate Scale</div>
+    <div class="ctrl">
+      <div class="row">Plate / Rotor ratio <span class="val" id="epsv">1.10×</span></div>
+      <input type="range" id="eps" min="1.0" max="1.5" step="0.01" value="1.1">
+    </div>
+  </div>
+
+  <div>
+    <div class="sec">Blade Geometry (fixed)</div>
+    <div style="font-size:0.6rem;color:var(--dim);line-height:1.8;">
+      Rotor D: <span style="color:var(--accent)">0.40 m</span><br>
+      Blade D: <span style="color:var(--accent)">0.20 m</span> (D/2)<br>
+      Overlap: <span style="color:var(--accent)">0.04 m</span> (0.10×D)<br>
+      Blades:  <span style="color:var(--accent)">2</span> × semicylinder<br>
+      Profile: <span style="color:var(--accent)">Cylindrical arc</span>
+    </div>
+  </div>
+
+  <div>
+    <div class="sec">Guide Vane Stator (fixed)</div>
+    <div style="font-size:0.6rem;color:var(--dim);line-height:1.8;">
+      Vanes:      <span style="color:var(--amber)">12</span><br>
+      Height:     <span style="color:var(--amber)">0.80 m</span><br>
+      Outer D:    <span style="color:var(--amber)">0.63 m</span><br>
+      Inner D:    <span style="color:var(--amber)">0.44 m</span><br>
+      Vane angle: <span style="color:var(--amber)">60°</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- CANVAS -->
+<div class="cvs-area">
+  <span class="hud tl">SAVONIUS VAWT · 3D MODEL</span>
+  <span class="hud tr" id="fps">60 FPS</span>
+  <span class="hud bl">ρ_air = 1.225 kg/m³</span>
+  <canvas id="c"></canvas>
+  <div class="wind-bar">
+    <div class="arrows"><div class="arr"></div><div class="arr"></div><div class="arr"></div></div>
+    WIND →
+  </div>
+</div>
+
+<!-- RIGHT -->
+<div class="right">
+
+  <div class="sec">Performance Calculator</div>
+
+  <div class="metric rpm">
+    <div class="mname">Rotational Speed</div>
+    <div class="mval" id="rpm">0.0<span class="munit">RPM</span></div>
+    <div class="mbar-bg"><div class="mbar" id="rpmB" style="width:0%"></div></div>
+  </div>
+
+  <div class="metric torq">
+    <div class="mname">Shaft Torque</div>
+    <div class="mval" id="trq">0.000<span class="munit">N·m</span></div>
+    <div class="mbar-bg"><div class="mbar" id="trqB" style="width:0%"></div></div>
+  </div>
+
+  <div class="metric pow">
+    <div class="mname">Output Power</div>
+    <div class="mval" id="pwr">0.00<span class="munit">W</span></div>
+    <div class="mbar-bg"><div class="mbar" id="pwrB" style="width:0%"></div></div>
+  </div>
+
+  <div class="metric enrg">
+    <div class="mname">Energy · 1 hr</div>
+    <div class="mval" id="enrg">0.00<span class="munit">kJ</span></div>
+    <div class="mbar-bg"><div class="mbar" id="enrgB" style="width:0%"></div></div>
+  </div>
+
+  <div>
+    <div class="sec" style="margin-bottom:7px">Aerodynamic Parameters</div>
+    <div class="specs">
+      <div class="sp"><div class="spv" id="cpV">0.000</div><div class="spk">Cp</div></div>
+      <div class="sp"><div class="spv" id="tsrV">0.00</div><div class="spk">TSR</div></div>
+      <div class="sp"><div class="spv" id="reV">—</div><div class="spk">Re ×10³</div></div>
+      <div class="sp"><div class="spv" id="omV">0.0</div><div class="spk">ω rad/s</div></div>
+      <div class="sp"><div class="spv">0.32</div><div class="spk">A m²</div></div>
+      <div class="sp"><div class="spv" id="pwV">0.0</div><div class="spk">P_wind W</div></div>
+    </div>
+  </div>
+
+  <div class="fml">
+    <div class="f">P = ½·ρ·Cp·A·V³</div>
+    A = H×D_r = 0.8×0.4 = 0.32 m²<br>
+    ρ = 1.225 kg/m³<br>
+    <div class="f">ω = TSR·V / R_r</div>
+    <div class="f">T = P / ω</div>
+    <div class="f">E(J) = P × 3600</div>
+    Savonius Cp ≈ 0.15–0.30<br>
+    Guide vanes → +15% Cp
+  </div>
+
+  <button class="rst-btn" onclick="resetAll()">⟳ Reset All</button>
+
+</div>
+
+<script>
+// ─── CANVAS ───────────────────────────────────────────────────────
+const C = document.getElementById('c');
+const ctx = C.getContext('2d');
+function resize() {
+  const a = C.parentElement;
+  C.width = a.clientWidth;
+  C.height = a.clientHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ─── CAMERA ──────────────────────────────────────────────────────
+let rx = 0.42, ry = 0.7;
+let zoom = 280;
+let drag = false, lx = 0, ly = 0;
+C.addEventListener('mousedown', e => { drag=true; lx=e.clientX; ly=e.clientY; });
+window.addEventListener('mouseup', () => drag=false);
+window.addEventListener('mousemove', e => {
+  if (!drag) return;
+  ry += (e.clientX-lx)*0.013; rx += (e.clientY-ly)*0.013;
+  lx=e.clientX; ly=e.clientY;
+});
+C.addEventListener('wheel', e => { zoom = Math.max(150, Math.min(700, zoom-e.deltaY*0.4)); });
+C.addEventListener('touchstart', e => { drag=true; lx=e.touches[0].clientX; ly=e.touches[0].clientY; });
+window.addEventListener('touchend', () => drag=false);
+window.addEventListener('touchmove', e => {
+  if (!drag) return;
+  ry += (e.touches[0].clientX-lx)*0.013; rx += (e.touches[0].clientY-ly)*0.013;
+  lx=e.touches[0].clientX; ly=e.touches[0].clientY;
+});
+
+// ─── PROJECTION ──────────────────────────────────────────────────
+function proj(x, y, z) {
+  // rotate X
+  let y1 = y*Math.cos(rx) - z*Math.sin(rx);
+  let z1 = y*Math.sin(rx) + z*Math.cos(rx);
+  // rotate Y
+  let x2 = x*Math.cos(ry) + z1*Math.sin(ry);
+  let z2 = -x*Math.sin(ry) + z1*Math.cos(ry);
+  const f = zoom / (zoom + z2 + 400);
+  return { sx: x2*f + C.width/2, sy: y1*f + C.height/2, z: z2, s: f };
+}
+
+// ─── GEOMETRY CONSTANTS ──────────────────────────────────────────
+// All in pixels; 1m = SC pixels
+const SC   = 280;          // scale px/m
+const H    = 0.80 * SC;    // rotor height = 0.8m
+const Dr   = 0.40 * SC;    // rotor diameter = 0.4m
+const Rr   = Dr / 2;       // rotor radius = 0.2m
+const Rb   = Rr;           // blade diameter = Dr/2 = 0.2m per blade (full semicircle diameter)
+const OVL  = 0.10 * Dr;    // overlap = 0.04m → in px
+
+// Guide vane stator
+const Dout = 0.63 * SC;    // outer diameter
+const Rout = Dout / 2;
+const Din  = 0.44 * SC;    // inner diameter
+const Rin  = Din / 2;
+const NVAN = 12;           // number of vanes
+const VANG = 60 * Math.PI / 180; // vane angle 60°
+
+// ─── STATE ───────────────────────────────────────────────────────
+let angle   = 0;
+let windSpd = 6;
+let showEP  = true;
+let showGV  = false;
+let showAX  = true;
+let showPRT = true;
+let wfMode  = false;
+let epScale = 1.1;
+
+// ─── PARTICLES ───────────────────────────────────────────────────
+const NP = 55;
+let parts = Array.from({length:NP}, () => spawnPart());
+function spawnPart() {
+  return {
+    x: (Math.random()-0.5)*Dout*2.5,
+    y: (Math.random()-0.5)*H*1.3,
+    z: -(Math.random()*Dout*5 + Dout),
+    spd: 0.4+Math.random()*0.6,
+    sz: 1+Math.random()*2
+  };
+}
+
+// ─── DRAW HELPERS ────────────────────────────────────────────────
+function drawGrid() {
+  const gs=45, ext=220;
+  ctx.strokeStyle='rgba(79,195,247,0.04)';
+  ctx.lineWidth=0.5;
+  for (let i=-ext; i<=ext; i+=gs) {
+    const a=proj(i, H/2+25, -ext), b=proj(i, H/2+25, ext);
+    ctx.beginPath(); ctx.moveTo(a.sx,a.sy); ctx.lineTo(b.sx,b.sy); ctx.stroke();
+    const c=proj(-ext, H/2+25, i), d=proj(ext, H/2+25, i);
+    ctx.beginPath(); ctx.moveTo(c.sx,c.sy); ctx.lineTo(d.sx,d.sy); ctx.stroke();
+  }
+}
+
+function drawAxis() {
+  if (!showAX) return;
+  const bot=proj(0, H/2+40, 0), top=proj(0, -H/2-40, 0);
+  const g=ctx.createLinearGradient(bot.sx,bot.sy,top.sx,top.sy);
+  g.addColorStop(0,'rgba(79,195,247,0)');
+  g.addColorStop(0.5,'rgba(79,195,247,0.7)');
+  g.addColorStop(1,'rgba(79,195,247,0)');
+  ctx.strokeStyle=g; ctx.lineWidth=1.5;
+  ctx.setLineDash([6,5]);
+  ctx.beginPath(); ctx.moveTo(bot.sx,bot.sy); ctx.lineTo(top.sx,top.sy); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+// ─── SAVONIUS BLADES ─────────────────────────────────────────────
+// Two semicylindrical blades offset by overlap (0.10D = 0.04m)
+// Blade center offset from axis:
+//   blade 0: center at (+Rr/2 - OVL/2, 0)   → concave faces wind
+//   blade 1: center at (-Rr/2 + OVL/2, 0)   opposite side
+// Each blade is a half-cylinder arc, radius = Rr (=0.2m)
+// The overlap means the two half-cylinders intersect by OVL at center
+
+function bladePts(side, ang, NY) {
+  // side = 0 or 1
+  const sign = (side===0) ? 1 : -1;
+  // offset of blade center from rotor axis (local frame before rotation)
+  const cx = sign * (Rr - OVL) * 0.5;  // blade center x
+  // Semicircle sweep: from -PI/2 to +PI/2 for concave side facing wind
+  // Blade 0: right half-cylinder, opening left (concave left)
+  // Blade 1: left half-cylinder, opening right
+  const startA = (side===0) ? Math.PI/2  : -Math.PI/2;
+  const endA   = (side===0) ? -Math.PI/2 : Math.PI/2;  // going toward axis
+  const pts = [];
+  const NA = 20; // arc divisions
+  const yTop = -H/2, yBot = H/2;
+  // Build strips (front face of blade = arc)
+  for (let yi=0; yi<=NY; yi++) {
+    const yL = yTop + (yBot-yTop)*(yi/NY);
+    const row = [];
+    for (let ai=0; ai<=NA; ai++) {
+      const a = startA + (endA-startA)*(ai/NA);
+      // local point on arc
+      const lx = cx + Rr*0.5*Math.cos(a);  // blade radius = Rr/2 (half of rotor)
+      const lz = Rr*0.5*Math.sin(a);
+      // rotate by turbine angle
+      const cosA=Math.cos(ang), sinA=Math.sin(ang);
+      const wx = lx*cosA - lz*sinA;
+      const wz = lx*sinA + lz*cosA;
+      row.push({x:wx, y:yL, z:wz});
+    }
+    pts.push(row);
+  }
+  return pts;
+}
+
+function drawBlade(side, ang) {
+  const NY = 12, NA = 20;
+  const pts = bladePts(side, ang, NY);
+  const col = side===0
+    ? ['rgba(100,175,225,','rgba(60,120,170,']
+    : ['rgba(80,155,205,','rgba(50,110,160,'];
+
+  for (let yi=0; yi<NY; yi++) {
+    for (let ai=0; ai<NA; ai++) {
+      const p00 = proj(pts[yi][ai].x,   pts[yi][ai].y,   pts[yi][ai].z);
+      const p10 = proj(pts[yi+1][ai].x, pts[yi+1][ai].y, pts[yi+1][ai].z);
+      const p01 = proj(pts[yi][ai+1].x, pts[yi][ai+1].y, pts[yi][ai+1].z);
+      const p11 = proj(pts[yi+1][ai+1].x, pts[yi+1][ai+1].y, pts[yi+1][ai+1].z);
+
+      if (wfMode) {
+        ctx.strokeStyle = col[0]+'0.7)';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(p00.sx,p00.sy); ctx.lineTo(p10.sx,p10.sy);
+        ctx.moveTo(p00.sx,p00.sy); ctx.lineTo(p01.sx,p01.sy);
+        ctx.stroke();
+      } else {
+        const t = ai/NA;
+        const shade = 0.15 + 0.7*Math.sin(Math.PI*t);
+        const g = ctx.createLinearGradient(p00.sx,p00.sy,p01.sx,p01.sy);
+        g.addColorStop(0, col[0]+(0.5+shade*0.4)+')');
+        g.addColorStop(1, col[1]+(0.3+shade*0.3)+')');
+        ctx.fillStyle = g;
+        ctx.strokeStyle = col[0]+'0.4)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(p00.sx,p00.sy);
+        ctx.lineTo(p01.sx,p01.sy);
+        ctx.lineTo(p11.sx,p11.sy);
+        ctx.lineTo(p10.sx,p10.sy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Blade thickness — thin back wall
+  const thk = 6; // px thickness
+  for (let yi=0; yi<NY; yi++) {
+    const sign = (side===0) ? 1 : -1;
+    // back edge: outermost arc point extruded inward
+    const pa0 = pts[yi][0], pa1 = pts[yi+1][0];
+    const angB = angle;
+    const nx = -Math.sin(angB)*sign*thk;
+    const nz =  Math.cos(angB)*sign*thk;
+    const pp0=proj(pa0.x+nx, pa0.y, pa0.z+nz);
+    const pp1=proj(pa1.x+nx, pa1.y, pa1.z+nz);
+    const pp00=proj(pa0.x, pa0.y, pa0.z);
+    const pp10=proj(pa1.x, pa1.y, pa1.z);
+    if (!wfMode) {
+      ctx.fillStyle = col[1]+'0.6)';
+      ctx.beginPath();
+      ctx.moveTo(pp00.sx,pp00.sy); ctx.lineTo(pp0.sx,pp0.sy);
+      ctx.lineTo(pp1.sx,pp1.sy);   ctx.lineTo(pp10.sx,pp10.sy);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+}
+
+// ─── END PLATES ──────────────────────────────────────────────────
+function drawPlate(yPos, ang) {
+  if (!showEP) return;
+  const r = Rr * epScale;
+  const N = 48;
+  const pts = [], ctr = proj(0,yPos,0);
+
+  if (wfMode) {
+    ctx.strokeStyle='rgba(140,180,210,0.55)';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    for (let i=0;i<=N;i++) {
+      const a=(i/N)*Math.PI*2;
+      const p=proj(Math.cos(a)*r, yPos, Math.sin(a)*r);
+      i===0?ctx.moveTo(p.sx,p.sy):ctx.lineTo(p.sx,p.sy);
+    }
+    ctx.stroke();
+  } else {
+    // solid disk
+    ctx.beginPath();
+    for (let i=0;i<=N;i++) {
+      const a=(i/N)*Math.PI*2;
+      const p=proj(Math.cos(a)*r, yPos, Math.sin(a)*r);
+      i===0?ctx.moveTo(p.sx,p.sy):ctx.lineTo(p.sx,p.sy);
+    }
+    const g=ctx.createRadialGradient(ctr.sx,ctr.sy,0,ctr.sx,ctr.sy,r);
+    g.addColorStop(0,'rgba(140,185,220,0.55)');
+    g.addColorStop(1,'rgba(80,120,160,0.3)');
+    ctx.fillStyle=g;
+    ctx.fill();
+    ctx.strokeStyle='rgba(140,185,220,0.65)';
+    ctx.lineWidth=1.5;
+    ctx.stroke();
+    // bolt holes
+    for (let b=0;b<8;b++) {
+      const a=(b/8)*Math.PI*2;
+      const bp=proj(Math.cos(a)*r*0.82, yPos, Math.sin(a)*r*0.82);
+      ctx.fillStyle='rgba(79,195,247,0.5)';
+      ctx.beginPath(); ctx.arc(bp.sx,bp.sy,2*bp.s,0,Math.PI*2); ctx.fill();
+    }
+    // center hub
+    ctx.fillStyle='rgba(60,100,140,0.8)';
+    ctx.beginPath(); ctx.arc(ctr.sx,ctr.sy,5*ctr.s,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(140,185,220,0.6)';
+    ctx.lineWidth=1; ctx.stroke();
+  }
+}
+
+// ─── GUIDE VANE STATOR ───────────────────────────────────────────
+// 12 flat rectangular vanes between inner ring (Rin=0.22m) and outer ring (Rout=0.315m)
+// Each vane at angle 60° from radial → tangential-ish placement like image 2
+// Vanes are vertical, full height 0.8m, placed at equal angular positions
+function drawStator() {
+  if (!showGV) return;
+  const yT = -H/2, yB = H/2;
+
+  // Draw outer ring
+  drawRing(Rout, yT, yB, 'rgba(130,165,200,0.45)', 'rgba(130,165,200,0.6)');
+  // Draw inner ring
+  drawRing(Rin, yT, yB, 'rgba(110,145,185,0.35)', 'rgba(110,145,185,0.5)');
+
+  // Draw top and bottom annular plates
+  drawAnnulus(yT, Rin, Rout, 'rgba(130,165,200,0.4)');
+  drawAnnulus(yB, Rin, Rout, 'rgba(130,165,200,0.4)');
+
+  // Draw 12 vanes
+  for (let v=0; v<NVAN; v++) {
+    const baseA = (v / NVAN) * Math.PI * 2;
+    // Vane runs from inner ring to outer ring
+    // placed tangentially at 60° from radial
+    // inner point
+    const ix = Math.cos(baseA) * Rin;
+    const iz = Math.sin(baseA) * Rin;
+    // outer point: offset by vane angle
+    const ox = Math.cos(baseA + VANG) * Rout;
+    const oz = Math.sin(baseA + VANG) * Rout;
+
+    // 4 corners of vane rectangle (top & bottom)
+    const corners = [
+      proj(ix, yT, iz), proj(ox, yT, oz),
+      proj(ox, yB, oz), proj(ix, yB, iz)
+    ];
+
+    if (wfMode) {
+      ctx.strokeStyle = 'rgba(255,202,40,0.5)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      corners.forEach((p,i) => i===0?ctx.moveTo(p.sx,p.sy):ctx.lineTo(p.sx,p.sy));
+      ctx.closePath(); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(corners[0].sx,corners[0].sy); ctx.lineTo(corners[3].sx,corners[3].sy);
+      ctx.moveTo(corners[1].sx,corners[1].sy); ctx.lineTo(corners[2].sx,corners[2].sy);
+      ctx.stroke();
+    } else {
+      // lighting: approximate normal
+      const avgZ = (corners[0].z+corners[1].z+corners[2].z+corners[3].z)/4;
+      const lit = 0.25 + 0.55 * (1 - Math.max(0,Math.min(1,(avgZ+400)/600)));
+      ctx.fillStyle = `rgba(130,160,200,${lit*0.55})`;
+      ctx.strokeStyle = `rgba(140,175,220,${lit*0.7})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      corners.forEach((p,i) => i===0?ctx.moveTo(p.sx,p.sy):ctx.lineTo(p.sx,p.sy));
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+  }
+}
+
+function drawRing(r, yT, yB, fillC, strokeC) {
+  const N = 48;
+  for (let i=0; i<N; i++) {
+    const a0=(i/N)*Math.PI*2, a1=((i+1)/N)*Math.PI*2;
+    const x0=Math.cos(a0)*r, z0=Math.sin(a0)*r;
+    const x1=Math.cos(a1)*r, z1=Math.sin(a1)*r;
+    const pts=[proj(x0,yT,z0), proj(x1,yT,z1), proj(x1,yB,z1), proj(x0,yB,z0)];
+    if (!wfMode) {
+      ctx.fillStyle=fillC; ctx.strokeStyle=strokeC; ctx.lineWidth=0.5;
+      ctx.beginPath(); pts.forEach((p,i)=>i===0?ctx.moveTo(p.sx,p.sy):ctx.lineTo(p.sx,p.sy));
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    } else {
+      ctx.strokeStyle=strokeC; ctx.lineWidth=0.5;
+      ctx.beginPath(); ctx.moveTo(pts[0].sx,pts[0].sy); ctx.lineTo(pts[1].sx,pts[1].sy);
+      ctx.moveTo(pts[0].sx,pts[0].sy); ctx.lineTo(pts[3].sx,pts[3].sy); ctx.stroke();
+    }
+  }
+}
+
+function drawAnnulus(yPos, rIn, rOut, fillC) {
+  if (wfMode) return;
+  const N=48;
+  ctx.fillStyle=fillC;
+  // outer circle
+  ctx.beginPath();
+  for (let i=0;i<=N;i++){const a=(i/N)*Math.PI*2, p=proj(Math.cos(a)*rOut,yPos,Math.sin(a)*rOut); i===0?ctx.moveTo(p.sx,p.sy):ctx.lineTo(p.sx,p.sy);}
+  // inner circle (CCW = hole)
+  for (let i=N;i>=0;i--){const a=(i/N)*Math.PI*2, p=proj(Math.cos(a)*rIn,yPos,Math.sin(a)*rIn); i===N?ctx.moveTo(p.sx,p.sy):ctx.lineTo(p.sx,p.sy);}
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(140,180,215,0.55)'; ctx.lineWidth=1;
+  ctx.beginPath();
+  for (let i=0;i<=N;i++){const a=(i/N)*Math.PI*2, p=proj(Math.cos(a)*rOut,yPos,Math.sin(a)*rOut); i===0?ctx.moveTo(p.sx,p.sy):ctx.lineTo(p.sx,p.sy);}
+  ctx.stroke();
+  ctx.beginPath();
+  for (let i=0;i<=N;i++){const a=(i/N)*Math.PI*2, p=proj(Math.cos(a)*rIn,yPos,Math.sin(a)*rIn); i===0?ctx.moveTo(p.sx,p.sy):ctx.lineTo(p.sx,p.sy);}
+  ctx.stroke();
+}
+
+// ─── PARTICLES ───────────────────────────────────────────────────
+function drawParticles(dt) {
+  if (!showPRT || windSpd < 0.05) return;
+  const spd = windSpd * 5.5;
+  for (const p of parts) {
+    p.z += spd * dt * SC * 0.28 * p.spd;
+    if (p.z > Rout * 4) {
+      Object.assign(p, spawnPart());
+      p.z = -Rout*5;
+    }
+    const pp = proj(p.x, p.y, p.z);
+    const pe = proj(p.x, p.y, p.z - spd*dt*SC*1.8*p.spd);
+    const al = Math.min(0.7, (p.z+Rout*5)/(Rout*8));
+    const g = ctx.createLinearGradient(pp.sx,pp.sy,pe.sx,pe.sy);
+    g.addColorStop(0,`rgba(79,195,247,${al})`);
+    g.addColorStop(1,'rgba(79,195,247,0)');
+    ctx.strokeStyle=g; ctx.lineWidth=p.sz*pp.s;
+    ctx.beginPath(); ctx.moveTo(pp.sx,pp.sy); ctx.lineTo(pe.sx,pe.sy); ctx.stroke();
+  }
+}
+
+// ─── PHYSICS ─────────────────────────────────────────────────────
+function calc(v) {
+  const rho=1.225, A=0.8*0.4;
+  let Cp = 0.20;
+  if (showGV) Cp *= 1.15;
+  if (!showEP) Cp *= 0.90;
+  Cp = Math.min(0.32, Math.max(0.08, Cp));
+  const Pw = 0.5*rho*A*v*v*v;
+  const P  = Cp * Pw;
+  const TSR=0.8, R=0.2;
+  const om = TSR*v/R;
+  const rpm = om*60/(2*Math.PI);
+  const T = om>0 ? P/om : 0;
+  const Re = (v*0.4)/1.5e-5;
+  return {rpm, T, P, Cp, TSR, om, Re:Re/1000, Pw};
+}
+
+function updateUI() {
+  const d = calc(windSpd);
+  document.getElementById('rpm').innerHTML  = d.rpm.toFixed(1)+'<span class="munit">RPM</span>';
+  document.getElementById('trq').innerHTML  = d.T.toFixed(3)+'<span class="munit">N·m</span>';
+  document.getElementById('pwr').innerHTML  = d.P.toFixed(2)+'<span class="munit">W</span>';
+  const kJ=(d.P*3600)/1000;
+  document.getElementById('enrg').innerHTML = kJ.toFixed(2)+'<span class="munit">kJ</span>';
+  document.getElementById('rpmB').style.width  = Math.min(100,d.rpm/3)+'%';
+  document.getElementById('trqB').style.width  = Math.min(100,d.T/0.5*100)+'%';
+  document.getElementById('pwrB').style.width  = Math.min(100,d.P/100*100)+'%';
+  document.getElementById('enrgB').style.width = Math.min(100,kJ/360*100)+'%';
+  document.getElementById('cpV').textContent  = d.Cp.toFixed(3);
+  document.getElementById('tsrV').textContent = d.TSR.toFixed(2);
+  document.getElementById('reV').textContent  = d.Re.toFixed(1);
+  document.getElementById('omV').textContent  = d.om.toFixed(1);
+  document.getElementById('pwV').textContent  = d.Pw.toFixed(1);
+}
+
+// ─── LOOP ─────────────────────────────────────────────────────────
+let lt=0, fpsS=60;
+function loop(ts) {
+  const dt = Math.min((ts-lt)/1000, 0.05); lt=ts;
+  fpsS = fpsS*0.92 + (1/(dt||0.016))*0.08;
+  document.getElementById('fps').textContent = Math.round(fpsS)+' FPS';
+
+  const d = calc(windSpd);
+  angle += d.om * dt;
+
+  ctx.clearRect(0,0,C.width,C.height);
+
+  // radial bg glow
+  const bg=ctx.createRadialGradient(C.width/2,C.height/2,0,C.width/2,C.height/2,C.width*0.55);
+  bg.addColorStop(0,'rgba(12,25,50,0.7)'); bg.addColorStop(1,'rgba(8,9,13,0)');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,C.width,C.height);
+
+  drawGrid();
+  drawParticles(dt);
+  drawAxis();
+
+  // Draw stator first (behind rotor) — bottom half
+  // For painter's algo, draw stator behind blades
+  // Determine which side of stator faces camera
+  drawStator();
+
+  // End plates (bottom)
+  drawPlate(H/2, angle);
+
+  // Blades — sort by z
+  const z0 = proj(Math.cos(angle)*Rr*0.5, 0, Math.sin(angle)*Rr*0.5).z;
+  const z1 = proj(-Math.cos(angle)*Rr*0.5, 0, -Math.sin(angle)*Rr*0.5).z;
+  if (z0 > z1) { drawBlade(1,angle); drawBlade(0,angle); }
+  else          { drawBlade(0,angle); drawBlade(1,angle); }
+
+  // End plates (top)
+  drawPlate(-H/2, angle);
+
+  // shadow
+  ctx.save();
+  ctx.globalAlpha=0.12;
+  const sc=proj(0,H/2+22,0);
+  const sg=ctx.createRadialGradient(sc.sx,sc.sy,0,sc.sx,sc.sy,Rr*1.3);
+  sg.addColorStop(0,'rgba(0,0,0,0.9)'); sg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sg;
+  ctx.beginPath();
+  ctx.ellipse(sc.sx,sc.sy,Rr*1.4,Rr*0.3,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  updateUI();
+  requestAnimationFrame(loop);
+}
+
+// ─── CONTROLS ────────────────────────────────────────────────────
+document.getElementById('ws').addEventListener('input', function() {
+  windSpd=parseFloat(this.value);
+  document.getElementById('wsv').textContent=windSpd.toFixed(1)+' m/s';
+});
+document.getElementById('ep').addEventListener('change', function() { showEP=this.checked; });
+document.getElementById('gv').addEventListener('change', function() { showGV=this.checked; });
+document.getElementById('ax').addEventListener('change', function() { showAX=this.checked; });
+document.getElementById('wp').addEventListener('change', function() { showPRT=this.checked; });
+document.getElementById('wf').addEventListener('change', function() { wfMode=this.checked; });
+document.getElementById('eps').addEventListener('input', function() {
+  epScale=parseFloat(this.value);
+  document.getElementById('epsv').textContent=epScale.toFixed(2)+'×';
+});
+
+function setView(v, e) {
+  document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  const V={iso:[0.42,0.7], top:[-Math.PI/2,0.01], front:[0.05,0.01], side:[0.05,Math.PI/2]};
+  [rx,ry]=V[v];
+}
+
+function resetAll() {
+  windSpd=6; document.getElementById('ws').value=6;
+  document.getElementById('wsv').textContent='6.0 m/s';
+  showEP=true;  document.getElementById('ep').checked=true;
+  showGV=false; document.getElementById('gv').checked=false;
+  showAX=true;  document.getElementById('ax').checked=true;
+  showPRT=true; document.getElementById('wp').checked=true;
+  wfMode=false; document.getElementById('wf').checked=false;
+  epScale=1.1;  document.getElementById('eps').value=1.1;
+  document.getElementById('epsv').textContent='1.10×';
+  rx=0.42; ry=0.7;
+}
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
